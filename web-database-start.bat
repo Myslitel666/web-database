@@ -3,18 +3,20 @@
 rem Переход в каталог с проектом
 cd /d "C:\Users\user\source\repos\web-database\web-database-backend"
 
-rem Запуск dotnet run
-echo Executing dotnet run...
-start /B dotnet-run.bat
+rem Запуск dotnet run, для фона атрибут -WindowStyle Hidden после powershell
+start powershell -Command "dotnet run"
 
 rem Переход в каталог с front-end
 cd /d "C:\Users\user\source\repos\web-database\web-database-frontend"
 
-rem Запуск npm start
-echo Executing npm start...
-start /B npm-start.bat
+rem Запуск npm start, для фона атрибут -WindowStyle Hidden после powershell
+start powershell -Command "npm run dev"
+
+rem Запуск проекта в Visual Studio Code. Для запуска в VS команда "start /B VectorX.sln"
+start "" /min cmd /c "code ."
 
 rem Переход в корневую директорию проекта
-cd /d ../
-rem Запуск проекта в Visual Studio Code. Для запуска в VS команда "start /B VectorX.sln"
-code .
+start /b "" "..\web-database.sln"
+
+rem Немедленно закрываем родительское окно CMD
+exit
