@@ -13,18 +13,14 @@ import {
   MemoryRouter,
 } from 'react-router';
 
+import { useState, useEffect } from 'react';
+
 const breadcrumbNameMap = {
-  '/html': 'HTML',
   '/html/bases': 'HTML Bases',
   '/html/document-structure': 'Document Structure',
   '/html/text-content': 'Text Content',
   '/html/hyperlinks': 'Hyperlinks',
   '/html/images-media': 'Images-Media',
-  '/css': 'CSS',
-  '/javascript': 'JavaScript',
-  '/typescript': 'TypeScript',
-  '/databases': 'Databases',
-  '/backend': 'Backend',
   '/backend/programming-fundamentals': 'Programming Fundamentals',
   '/backend/core-backend-concepts': 'Core Backend Concepts',
   '/backend/databases': 'Databases',
@@ -33,34 +29,10 @@ const breadcrumbNameMap = {
   '/backend/frameworks': 'Languages & Frameworks',
   '/backend/data-validation': 'Data Validation',
   '/backend/error-handling': 'Error Handling',
-  '/frontend': 'Frontend',
-};
-
-function ListItemLink(props) {
-  const { to, open, ...other } = props;
-  const primary = breadcrumbNameMap[to];
-
-  let icon = null;
-  if (open != null) {
-    icon = open ? <ExpandLess /> : <ExpandMore />;
-  }
-
-  return (
-    <li>
-      <ListItemButton component={RouterLink} to={to} {...other}>
-        <ListItemText primary={primary} />
-        {icon}
-      </ListItemButton>
-    </li>
-  );
-}
-
-ListItemLink.propTypes = {
-  open: PropTypes.bool,
-  to: PropTypes.string.isRequired,
 };
 
 export default function NavigationMenu() {
+  const [breadcrumbs, setBreadcrumbs] = useState({});
   const [htmlOpen, setHtmlOpen] = React.useState(false);
   const [cssOpen, setCssOpen] = React.useState(false);
   const [javaScriptOpen, setJavaScriptOpen] = React.useState(false);
@@ -68,6 +40,68 @@ export default function NavigationMenu() {
   const [databasesOpen, setDatabasesOpen] = React.useState(false);
   const [backendOpen, setBackendOpen] = React.useState(false);
   const [frontendOpen, setFrontendOpen] = React.useState(false);
+
+  ListItemLink.propTypes = {
+    open: PropTypes.bool,
+    to: PropTypes.string.isRequired,
+  };
+
+  function ListItemLink(props) {
+    const { to, open, ...other } = props;
+    const primary = breadcrumbs[to];
+
+    let icon = null;
+    if (open != null) {
+      icon = open ? <ExpandLess /> : <ExpandMore />;
+    }
+
+    return (
+      <li>
+        <ListItemButton component={RouterLink} to={to} {...other}>
+          <ListItemText primary={primary} />
+          {icon}
+        </ListItemButton>
+      </li>
+    );
+  }
+
+  //Функция для загрузки родительских ссылок
+  async function loadParentItems() {
+  try {
+      const response = await fetch('http://localhost:5167/api/menuItems/getParentMenuItems', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const parentItems = await response.json();
+
+      // Создаем новый объект с маршрутами
+      const newBreadcrumbs = { ...breadcrumbNameMap };
+      
+      // Добавляем родительские пункты
+      parentItems.forEach(item => {
+        newBreadcrumbs[item.url] = item.title;
+      });
+
+      console.log('Обновленные маршруты:', newBreadcrumbs);
+      setBreadcrumbs(newBreadcrumbs); // Обновляем состояние
+      
+      // Добавляем родительские ссылки
+      parentItems.forEach(item => {
+        breadcrumbNameMap[item.url] = item.title;
+      });
+      
+      console.log('Родительские пункты загружены:', parentItems);
+    } catch (error) {
+      console.error('Ошибка загрузки:', error);
+    }
+  }
+
+  useEffect(()=>{
+    loadParentItems();
+  },[])
 
   const handleHtmlClick = () => {
     setHtmlOpen((prevOpen) => !prevOpen);

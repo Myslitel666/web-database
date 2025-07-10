@@ -11,9 +11,9 @@ namespace web_database_backend.Controllers
     {
         private readonly WebDatabaseContext _webDatabaseContext;
 
-        public MenuItemsController(WebDatabaseContext webDatabaseContext)
+        public MenuItemsController()
         {
-            _webDatabaseContext = webDatabaseContext;
+            _webDatabaseContext = new WebDatabaseContext();
         }
 
         // GET: api/menuItems/getParentMenuItems
