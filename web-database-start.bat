@@ -14,9 +14,10 @@ start powershell -Command "npm run dev"
 
 rem Запуск проекта в Visual Studio Code. Для запуска в VS команда "start /B VectorX.sln"
 start "" /min cmd /c "code ."
+rem start /b powershell -WindowStyle Hidden -Command "Start-Process 'code' -ArgumentList '.'"
 
 rem Переход в корневую директорию проекта
-start /b "" "..\web-database.sln"
+start /b powershell -WindowStyle Hidden -Command "Start-Process '..\web-database.sln'"
 
 rem Немедленно закрываем родительское окно CMD
 exit
