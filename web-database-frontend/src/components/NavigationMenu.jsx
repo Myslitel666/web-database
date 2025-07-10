@@ -111,8 +111,6 @@ export default function NavigationMenu() {
               padding: 0, 
               margin: 0
             }}
-            component="nav"
-            aria-labelledby="nested-list-subheader"
           >
             <ListItemLink 
               to="/html" open={htmlOpen} 
