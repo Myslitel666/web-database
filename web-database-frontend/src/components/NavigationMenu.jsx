@@ -106,8 +106,25 @@ export default function NavigationMenu() {
           component="nav"
           aria-label="mailbox folders"
         >
-          <List  sx = {{padding: 0, margin: 0}}>
-            <ListItemLink to="/html" open={htmlOpen} onClick={handleHtmlClick} />
+          <List  
+            sx = {{
+              padding: 0, 
+              margin: 0
+            }}
+            component="nav"
+            aria-labelledby="nested-list-subheader"
+          >
+            <ListItemLink 
+              to="/html" open={htmlOpen} 
+              onClick={handleHtmlClick} 
+              sx={{
+                "@media (prefers-color-scheme: light)": {
+                  "&:hover": {
+                    color: "primary.main",
+                  },
+                },
+              }}
+            />
             <Collapse component="li" in={htmlOpen} timeout="auto" unmountOnExit>
               <List disablePadding >
                 <ListItemLink to="/html/bases" />
