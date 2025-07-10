@@ -1,19 +1,13 @@
-import * as React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
-
 import ListItemButton from '@mui/material/ListItemButton';
 import Collapse from '@mui/material/Collapse';
 import ListItemText from '@mui/material/ListItemText';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import {
-  Link as RouterLink,
-  MemoryRouter,
-} from 'react-router';
-
-import { useState, useEffect } from 'react';
+import { Link as RouterLink, MemoryRouter } from 'react-router';
 
 const breadcrumbNameMap = {
   '/html/bases': 'HTML Bases',
@@ -31,98 +25,81 @@ const breadcrumbNameMap = {
   '/backend/error-handling': 'Error Handling',
 };
 
+// Дочерние элементы для каждого родительского пункта
+const childItemsMap = {
+  '/html': [
+    { url: '/html/bases', title: 'HTML Bases' }
+  ],
+  '/backend': [
+    { url: '/backend/programming-fundamentals', title: 'Programming Fundamentals' },
+    { url: '/backend/core-backend-concepts', title: 'Core Backend Concepts' },
+    { url: '/backend/databases', title: 'Databases' },
+    { url: '/backend/api-design', title: 'API Design' },
+    { url: '/backend/auth', title: 'Authentication' },
+    { url: '/backend/frameworks', title: 'Frameworks' }
+  ]
+};
+
+function ListItemLink({ to, open, onClick, primary }) {
+  return (
+    <li>
+      <ListItemButton component={RouterLink} to={to} onClick={onClick}>
+        <ListItemText primary={primary} />
+        {open !== undefined && (open ? <ExpandLess /> : <ExpandMore />)}
+      </ListItemButton>
+    </li>
+  );
+}
+
+ListItemLink.propTypes = {
+  open: PropTypes.bool,
+  to: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
+  primary: PropTypes.string
+};
+
 export default function NavigationMenu() {
-  const [breadcrumbs, setBreadcrumbs] = useState({});
-  const [htmlOpen, setHtmlOpen] = React.useState(false);
-  const [cssOpen, setCssOpen] = React.useState(false);
-  const [javaScriptOpen, setJavaScriptOpen] = React.useState(false);
-  const [typeScriptOpen, setTypeScriptOpen] = React.useState(false);
-  const [databasesOpen, setDatabasesOpen] = React.useState(false);
-  const [backendOpen, setBackendOpen] = React.useState(false);
-  const [frontendOpen, setFrontendOpen] = React.useState(false);
+  const [parentItems, setParentItems] = useState([]);
+  const [openStates, setOpenStates] = useState({});
 
-  ListItemLink.propTypes = {
-    open: PropTypes.bool,
-    to: PropTypes.string.isRequired,
-  };
-
-  function ListItemLink(props) {
-    const { to, open, ...other } = props;
-    const primary = breadcrumbs[to];
-
-    let icon = null;
-    if (open != null) {
-      icon = open ? <ExpandLess /> : <ExpandMore />;
+  // Загрузка родительских пунктов
+  useEffect(() => {
+    async function loadParentItems() {
+      try {
+        const response = await fetch('http://localhost:5167/api/menuItems/getParentMenuItems');
+        const data = await response.json();
+        
+        // Инициализация состояний открытия
+        const initialOpenStates = {};
+        data.forEach(item => {
+          initialOpenStates[item.url] = false;
+        });
+        
+        setParentItems(data);
+        setOpenStates(initialOpenStates);
+      } catch (error) {
+        console.error('Ошибка загрузки:', error);
+      }
     }
-
-    return (
-      <li>
-        <ListItemButton component={RouterLink} to={to} {...other}>
-          <ListItemText primary={primary} />
-          {icon}
-        </ListItemButton>
-      </li>
-    );
-  }
-
-  //Функция для загрузки родительских ссылок
-  async function loadParentItems() {
-  try {
-      const response = await fetch('http://localhost:5167/api/menuItems/getParentMenuItems', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const parentItems = await response.json();
-
-      // Создаем новый объект с маршрутами
-      const newBreadcrumbs = { ...breadcrumbNameMap };
-      
-      // Добавляем родительские пункты
-      parentItems.forEach(item => {
-        newBreadcrumbs[item.url] = item.title;
-      });
-
-      console.log('Обновленные маршруты:', newBreadcrumbs);
-      setBreadcrumbs(newBreadcrumbs); // Обновляем состояние
-      
-      // Добавляем родительские ссылки
-      parentItems.forEach(item => {
-        breadcrumbNameMap[item.url] = item.title;
-      });
-      
-      console.log('Родительские пункты загружены:', parentItems);
-    } catch (error) {
-      console.error('Ошибка загрузки:', error);
-    }
-  }
-
-  useEffect(()=>{
+    
     loadParentItems();
-  },[])
+  }, []);
 
-  const handleHtmlClick = () => {
-    setHtmlOpen((prevOpen) => !prevOpen);
+  // Обработчик клика
+  const handleItemClick = (url) => {
+    setOpenStates(prev => ({
+      ...prev,
+      [url]: !prev[url]
+    }));
   };
-  const handleCssClick = () => {
-    setCssOpen((prevOpen) => !prevOpen);
-  };
-  const handleJavaScriptClick = () => {
-    setJavaScriptOpen((prevOpen) => !prevOpen);
-  };
-  const handleTypeScriptClick = () => {
-    setTypeScriptOpen((prevOpen) => !prevOpen);
-  };
-  const handleDatabasesClick = () => {
-    setDatabasesOpen((prevOpen) => !prevOpen);
-  };
-  const handleBackendClick = () => {
-    setBackendOpen((prevOpen) => !prevOpen);
-  };
-  const handleFrontendClick = () => {
-    setFrontendOpen((prevOpen) => !prevOpen);
+
+  // Объединение breadcrumbNameMap с загруженными данными
+  const allBreadcrumbs = {
+    ...breadcrumbNameMap,
+    ...parentItems.reduce((acc, item) => {
+      acc[item.url] = item.title;
+      return acc;
+    }, {})
   };
 
   return (
@@ -134,75 +111,33 @@ export default function NavigationMenu() {
         borderRight: '1px solid',
         height: '100%',
         borderColor: 'divider'
-    }}>
-        <Box
-          sx={{ bgcolor: 'background.paper'}}
-          component="nav"
-          aria-label="mailbox folders"
-        >
-          <List  
-            sx = {{
-              padding: 0, 
-              margin: 0
-            }}
-          >
-            <ListItemLink 
-              to="/html" open={htmlOpen} 
-              onClick={handleHtmlClick} 
-              sx={{
-                "@media (prefers-color-scheme: light)": {
-                  "&:hover": {
-                    color: "primary.main",
-                  },
-                },
-              }}
-            />
-            <Collapse component="li" in={htmlOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/html/bases" />
-              </List>
-            </Collapse>
-            <ListItemLink to="/css" open={cssOpen} onClick={handleCssClick} />
-            <Collapse component="li" in={cssOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/inbox/important" />
-              </List>
-            </Collapse>
-            <ListItemLink to="/javascript" open={javaScriptOpen} onClick={handleJavaScriptClick} />
-            <Collapse component="li" in={javaScriptOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/inbox/important" />
-              </List>
-            </Collapse>
-            <ListItemLink to="/typescript" open={typeScriptOpen} onClick={handleTypeScriptClick} />
-            <Collapse component="li" in={typeScriptOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/inbox/important" />
-              </List>
-            </Collapse>
-            <ListItemLink to="/databases" open={databasesOpen} onClick={handleDatabasesClick} />
-            <Collapse component="li" in={databasesOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/inbox/important" />
-              </List>
-            </Collapse>
-            <ListItemLink to="/backend" open={backendOpen} onClick={handleBackendClick} />
-            <Collapse component="li" in={backendOpen} timeout="auto" unmountOnExit>
-              <List disablePadding sx={{ pl: 2 }}>
-                <ListItemLink to='/backend/programming-fundamentals' />
-                <ListItemLink to='/backend/core-backend-concepts' />
-                <ListItemLink to='/backend/databases' />
-                <ListItemLink to='/backend/api-design' />
-                <ListItemLink to='/backend/auth' />
-                <ListItemLink to='/backend/frameworks' />
-              </List>
-            </Collapse>
-            <ListItemLink to="/frontend" open={frontendOpen} onClick={handleFrontendClick} />
-            <Collapse component="li" in={frontendOpen} timeout="auto" unmountOnExit>
-              <List disablePadding >
-                <ListItemLink to="/inbox/important" />
-              </List>
-            </Collapse>
+      }}>
+        <Box component="nav" aria-label="mailbox folders">
+          <List sx={{ padding: 0, margin: 0 }}>
+            {parentItems.map(item => (
+              <React.Fragment key={item.url}>
+                <ListItemLink 
+                  to={item.url}
+                  open={openStates[item.url]}
+                  onClick={() => handleItemClick(item.url)}
+                  primary={allBreadcrumbs[item.url] || item.url}
+                />
+                
+                {childItemsMap[item.url] && (
+                  <Collapse in={openStates[item.url]} timeout="auto" unmountOnExit>
+                    <List disablePadding sx={{ pl: 2 }}>
+                      {childItemsMap[item.url].map(child => (
+                        <ListItemLink
+                          key={child.url}
+                          to={child.url}
+                          primary={allBreadcrumbs[child.url] || child.title}
+                        />
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </React.Fragment>
+            ))}
           </List>
         </Box>
       </Box>
